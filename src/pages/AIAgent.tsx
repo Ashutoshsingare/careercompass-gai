@@ -8,10 +8,6 @@ import {
   Send,
   Sparkles,
   User,
-  Map,
-  FileText,
-  Brain,
-  Lightbulb,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,40 +24,6 @@ interface Message {
   roadmapData?: RoadmapData;
 }
 
-const quickPrompts = [
-  { 
-    icon: Map, 
-    label: "Generate Roadmap", 
-    prompt: "Create a personalized learning roadmap for becoming a Full Stack Developer with React and Node.js",
-    type: "roadmap" as const,
-    goal: "Full Stack Developer"
-  },
-  { 
-    icon: Map, 
-    label: "Data Scientist Path", 
-    prompt: "Create a personalized learning roadmap for becoming a Data Scientist",
-    type: "roadmap" as const,
-    goal: "Data Scientist"
-  },
-  { 
-    icon: FileText, 
-    label: "Resume Tips", 
-    prompt: "Give me tips to improve my resume for software engineering roles at top tech companies",
-    type: "chat" as const 
-  },
-  { 
-    icon: Brain, 
-    label: "Interview Prep", 
-    prompt: "Help me prepare for technical interviews at top tech companies like Google, Meta, and Amazon",
-    type: "chat" as const 
-  },
-  { 
-    icon: Lightbulb, 
-    label: "Skill Gap Analysis", 
-    prompt: "Analyze the skills I need to develop for a career in machine learning",
-    type: "chat" as const 
-  },
-];
 
 export default function AIAgent() {
   const [messages, setMessages] = useState<Message[]>([
@@ -312,25 +274,6 @@ export default function AIAgent() {
               </div>
             )}
             <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Prompts */}
-          <div className="px-6 py-3 border-t border-border/40">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {quickPrompts.map((prompt, i) => (
-                <Button
-                  key={i}
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => handleSend(prompt.prompt, prompt.type, prompt.goal)}
-                  disabled={isLoading}
-                >
-                  <prompt.icon className="w-4 h-4 mr-2" />
-                  {prompt.label}
-                </Button>
-              ))}
-            </div>
           </div>
 
           {/* Input */}
