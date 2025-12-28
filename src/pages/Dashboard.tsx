@@ -1,8 +1,11 @@
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatCard } from "@/components/ui/StatCard";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   TrendingUp,
   Target,
@@ -31,13 +34,35 @@ const upcomingTasks = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (data?.display_name) {
+          setDisplayName(data.display_name);
+        }
+      }
+    }
+    fetchProfile();
+  }, [user]);
+
+  const userName = displayName || user?.email?.split("@")[0] || "there";
+
   return (
     <AppLayout>
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-            Welcome back, <span className="gradient-text">Alex</span>! 👋
+            Welcome back, <span className="gradient-text">{userName}</span>! 👋
           </h1>
           <p className="text-muted-foreground">
             Here's your career progress overview
