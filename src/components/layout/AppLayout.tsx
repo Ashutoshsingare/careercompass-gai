@@ -44,24 +44,25 @@ export function AppLayout({ children }: AppLayoutProps) {
       
       {/* Top bar with user menu */}
       <div 
-        className={`fixed top-0 right-0 z-30 p-4 transition-all duration-300 ${
+        className={`fixed top-0 right-0 z-30 h-16 flex items-center px-6 transition-all duration-300 ${
           sidebarCollapsed ? "left-16" : "left-64"
         }`}
       >
-        <div className="flex justify-end">
+        <div className="flex-1" />
+        <div className="flex items-center">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Button variant="ghost" size="sm" className="gap-2 h-10">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
                     <User className="w-4 h-4 text-primary-foreground" />
                   </div>
-                  <span className="hidden md:inline text-sm">
+                  <span className="hidden md:inline text-sm font-medium">
                     {displayName || user.email?.split("@")[0]}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="cursor-pointer">
                     <User className="w-4 h-4 mr-2" />
