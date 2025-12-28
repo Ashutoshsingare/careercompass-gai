@@ -26,43 +26,77 @@ serve(async (req) => {
     let systemPrompt = "";
     
     if (type === "roadmap") {
-      systemPrompt = `You are an expert career coach and learning path designer. Your role is to create personalized, actionable career roadmaps for students and professionals.
+      systemPrompt = `You are an expert career coach and learning path designer. Create personalized, actionable career roadmaps.
 
-When creating roadmaps:
-1. Break the journey into clear phases (Foundation, Core Skills, Advanced, Career Launch)
-2. Each phase should have specific modules with estimated hours
-3. Include practical projects and milestones
-4. Consider the user's current skill level and target role
-5. Provide realistic timelines
+CRITICAL: You MUST respond with ONLY a valid JSON object (no markdown, no extra text). Use this exact format:
 
-Format your response as structured markdown with clear sections for each phase. Include:
-- Phase name and duration
-- Learning modules with time estimates
-- Key skills to acquire
-- Recommended resources
-- Milestone projects
-
-Be encouraging but realistic about the effort required.`;
-    } else if (type === "resume") {
-      systemPrompt = `You are an expert resume analyst and career advisor. Your role is to analyze resumes and provide actionable feedback to improve them.
-
-When analyzing resumes:
-1. Evaluate each section (Contact, Summary, Experience, Skills, Education, Projects)
-2. Give a score out of 100 for each section
-3. Identify strengths and areas for improvement
-4. Provide specific, actionable suggestions
-5. Identify skill gaps based on the target role
-
-Format your response as structured JSON with:
 {
-  "overallScore": number,
-  "sections": [{"name": string, "score": number, "status": "good"|"needs-work"|"critical", "feedback": string}],
-  "strengths": [string],
-  "improvements": [string],
-  "skillGaps": [{"skill": string, "current": number, "target": number}]
+  "title": "Career Role Name",
+  "subtitle": "Your personalized career roadmap is ready.",
+  "skills": [
+    "Skill 1",
+    "Skill 2",
+    "Skill 3 (with details if needed)",
+    "..."
+  ],
+  "tools": [
+    "Tool Category: Tool1, Tool2, Tool3",
+    "Another Category: Tool1, Tool2",
+    "..."
+  ],
+  "phases": [
+    {
+      "name": "Phase 1: Foundation",
+      "duration": "4-6 weeks",
+      "topics": [
+        "Topic 1 to learn",
+        "Topic 2 to learn",
+        "..."
+      ]
+    },
+    {
+      "name": "Phase 2: Core Skills",
+      "duration": "6-8 weeks",
+      "topics": ["..."]
+    },
+    {
+      "name": "Phase 3: Advanced",
+      "duration": "6-8 weeks", 
+      "topics": ["..."]
+    },
+    {
+      "name": "Phase 4: Career Launch",
+      "duration": "4 weeks",
+      "topics": ["..."]
+    }
+  ]
 }
 
-Be constructive and specific in your feedback.`;
+Include 8-15 skills, 5-8 tool categories, and 4 phases with 5-10 topics each. Be specific and actionable.`;
+    } else if (type === "resume") {
+      systemPrompt = `You are an expert resume analyst and career advisor. Analyze resumes and provide actionable feedback.
+
+CRITICAL: You MUST respond with ONLY a valid JSON object (no markdown, no extra text):
+
+{
+  "overallScore": 75,
+  "sections": [
+    {"name": "Contact Info", "score": 90, "status": "good", "feedback": "..."},
+    {"name": "Summary", "score": 65, "status": "needs-work", "feedback": "..."},
+    {"name": "Experience", "score": 80, "status": "good", "feedback": "..."},
+    {"name": "Skills", "score": 70, "status": "needs-work", "feedback": "..."},
+    {"name": "Education", "score": 85, "status": "good", "feedback": "..."},
+    {"name": "Projects", "score": 50, "status": "critical", "feedback": "..."}
+  ],
+  "strengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "improvements": ["Improvement 1", "Improvement 2", "Improvement 3", "Improvement 4"],
+  "skillGaps": [
+    {"skill": "Skill Name", "current": 40, "target": 80},
+    {"skill": "Another Skill", "current": 30, "target": 70}
+  ]
+}
+
+Be constructive and specific.`;
     } else {
       systemPrompt = `You are Career Compass AI, an intelligent career guidance assistant powered by Google Gemini. You help students and professionals navigate their career journeys with personalized advice.
 

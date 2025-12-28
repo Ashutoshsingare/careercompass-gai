@@ -17,19 +17,50 @@ import {
 import { cn } from "@/lib/utils";
 import { streamChat } from "@/lib/ai-chat";
 import { useToast } from "@/hooks/use-toast";
+import { RoadmapDisplay, parseRoadmapFromText, type RoadmapData } from "@/components/RoadmapDisplay";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  type?: "text" | "roadmap";
+  roadmapData?: RoadmapData;
 }
 
 const quickPrompts = [
-  { icon: Map, label: "Generate Roadmap", prompt: "Create a personalized learning roadmap for becoming a Full Stack Developer with React and Node.js. I'm currently a beginner with basic HTML/CSS knowledge." },
-  { icon: FileText, label: "Resume Tips", prompt: "Give me tips to improve my resume for software engineering roles at top tech companies" },
-  { icon: Brain, label: "Interview Prep", prompt: "Help me prepare for technical interviews at top tech companies like Google, Meta, and Amazon" },
-  { icon: Lightbulb, label: "Skill Gap Analysis", prompt: "Analyze the skills I need to develop for a career in data science. I currently know Python basics and some statistics." },
+  { 
+    icon: Map, 
+    label: "Generate Roadmap", 
+    prompt: "Create a personalized learning roadmap for becoming a Full Stack Developer with React and Node.js",
+    type: "roadmap" as const,
+    goal: "Full Stack Developer"
+  },
+  { 
+    icon: Map, 
+    label: "Data Scientist Path", 
+    prompt: "Create a personalized learning roadmap for becoming a Data Scientist",
+    type: "roadmap" as const,
+    goal: "Data Scientist"
+  },
+  { 
+    icon: FileText, 
+    label: "Resume Tips", 
+    prompt: "Give me tips to improve my resume for software engineering roles at top tech companies",
+    type: "chat" as const 
+  },
+  { 
+    icon: Brain, 
+    label: "Interview Prep", 
+    prompt: "Help me prepare for technical interviews at top tech companies like Google, Meta, and Amazon",
+    type: "chat" as const 
+  },
+  { 
+    icon: Lightbulb, 
+    label: "Skill Gap Analysis", 
+    prompt: "Analyze the skills I need to develop for a career in machine learning",
+    type: "chat" as const 
+  },
 ];
 
 export default function AIAgent() {
@@ -39,10 +70,12 @@ export default function AIAgent() {
       role: "assistant",
       content: "Hello! I'm your AI Career Agent powered by Google Gemini. I can help you create personalized learning roadmaps, analyze your skills, prepare for interviews, and guide you towards your dream career. What would you like to explore today?",
       timestamp: new Date(),
+      type: "text",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentGoal, setCurrentGoal] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -54,31 +87,42 @@ export default function AIAgent() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async (customPrompt?: string) => {
+  const handleSend = async (customPrompt?: string, promptType?: "chat" | "roadmap", goal?: string) => {
     const messageText = customPrompt || input;
     if (!messageText.trim() || isLoading) return;
+
+    // Detect if this is a roadmap request
+    const isRoadmapRequest = promptType === "roadmap" || 
+      /roadmap|learning path|career path|how to become|guide.*to.*become/i.test(messageText);
+    
+    const requestType = isRoadmapRequest ? "roadmap" : "chat";
+    
+    // Extract goal from the message if not provided
+    const extractedGoal = goal || messageText.match(/(?:become|for|to)\s+(?:a\s+)?(.+?)(?:\.|$)/i)?.[1] || messageText;
+    if (isRoadmapRequest) {
+      setCurrentGoal(extractedGoal);
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: messageText,
       timestamp: new Date(),
+      type: "text",
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
-    // Prepare messages for API (excluding timestamps and ids)
-    const apiMessages = [...messages, userMessage]
-      .filter(m => m.id !== "1") // Exclude initial greeting
-      .map(m => ({ role: m.role, content: m.content }));
+    // Prepare messages for API
+    const apiMessages = [{ role: "user" as const, content: messageText }];
 
     let assistantContent = "";
 
     await streamChat({
       messages: apiMessages,
-      type: "chat",
+      type: requestType,
       onDelta: (delta) => {
         assistantContent += delta;
         setMessages(prev => {
@@ -95,13 +139,64 @@ export default function AIAgent() {
               role: "assistant" as const,
               content: assistantContent,
               timestamp: new Date(),
+              type: "text" as const,
             },
           ];
         });
       },
       onDone: () => {
         setIsLoading(false);
-        // Finalize the message ID
+        
+        // Try to parse roadmap data if this was a roadmap request
+        if (isRoadmapRequest) {
+          try {
+            // Try to parse JSON from the response
+            const jsonMatch = assistantContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const roadmapData = JSON.parse(jsonMatch[0]) as RoadmapData;
+              if (roadmapData.skills && roadmapData.tools && roadmapData.phases) {
+                setMessages(prev => 
+                  prev.map((m, i) => 
+                    i === prev.length - 1
+                      ? { 
+                          ...m, 
+                          id: Date.now().toString(),
+                          type: "roadmap" as const,
+                          roadmapData: {
+                            ...roadmapData,
+                            title: roadmapData.title || extractedGoal,
+                          }
+                        }
+                      : m
+                  )
+                );
+                return;
+              }
+            }
+          } catch (e) {
+            console.log("Could not parse roadmap JSON, falling back to text parsing");
+          }
+          
+          // Try markdown parsing as fallback
+          const parsedRoadmap = parseRoadmapFromText(assistantContent, extractedGoal);
+          if (parsedRoadmap) {
+            setMessages(prev => 
+              prev.map((m, i) => 
+                i === prev.length - 1
+                  ? { 
+                      ...m, 
+                      id: Date.now().toString(),
+                      type: "roadmap" as const,
+                      roadmapData: parsedRoadmap
+                    }
+                  : m
+              )
+            );
+            return;
+          }
+        }
+        
+        // Regular text message
         setMessages(prev => 
           prev.map((m, i) => 
             i === prev.length - 1 && m.id.startsWith("streaming-")
@@ -119,6 +214,56 @@ export default function AIAgent() {
         });
       },
     });
+  };
+
+  const renderMessage = (message: Message) => {
+    if (message.type === "roadmap" && message.roadmapData) {
+      return (
+        <div className="w-full py-4">
+          <RoadmapDisplay data={message.roadmapData} />
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          "flex gap-3",
+          message.role === "user" && "flex-row-reverse"
+        )}
+      >
+        <div
+          className={cn(
+            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+            message.role === "assistant"
+              ? "bg-gradient-to-br from-primary to-accent"
+              : "bg-secondary"
+          )}
+        >
+          {message.role === "assistant" ? (
+            <Bot className="w-4 h-4 text-primary-foreground" />
+          ) : (
+            <User className="w-4 h-4 text-foreground" />
+          )}
+        </div>
+        <div
+          className={cn(
+            "max-w-[80%] rounded-xl p-4",
+            message.role === "assistant"
+              ? "bg-secondary/50 text-foreground"
+              : "bg-gradient-to-r from-primary/20 to-accent/10 border border-primary/20"
+          )}
+        >
+          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {message.timestamp.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -147,43 +292,8 @@ export default function AIAgent() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex gap-3",
-                  message.role === "user" && "flex-row-reverse"
-                )}
-              >
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                    message.role === "assistant"
-                      ? "bg-gradient-to-br from-primary to-accent"
-                      : "bg-secondary"
-                  )}
-                >
-                  {message.role === "assistant" ? (
-                    <Bot className="w-4 h-4 text-primary-foreground" />
-                  ) : (
-                    <User className="w-4 h-4 text-foreground" />
-                  )}
-                </div>
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-xl p-4",
-                    message.role === "assistant"
-                      ? "bg-secondary/50 text-foreground"
-                      : "bg-gradient-to-r from-primary/20 to-accent/10 border border-primary/20"
-                  )}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
+              <div key={message.id}>
+                {renderMessage(message)}
               </div>
             ))}
             {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
@@ -195,7 +305,7 @@ export default function AIAgent() {
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
                     <span className="text-sm text-muted-foreground">
-                      Thinking...
+                      Generating your roadmap...
                     </span>
                   </div>
                 </div>
@@ -213,7 +323,7 @@ export default function AIAgent() {
                   variant="outline"
                   size="sm"
                   className="shrink-0"
-                  onClick={() => handleSend(prompt.prompt)}
+                  onClick={() => handleSend(prompt.prompt, prompt.type, prompt.goal)}
                   disabled={isLoading}
                 >
                   <prompt.icon className="w-4 h-4 mr-2" />
@@ -235,7 +345,7 @@ export default function AIAgent() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything about your career..."
+                placeholder="Ask for a career roadmap, e.g., 'Create a roadmap to become a Data Scientist'"
                 className="flex-1 bg-secondary/50 border-border/40 focus:border-primary/40"
                 disabled={isLoading}
               />
