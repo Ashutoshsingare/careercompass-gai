@@ -3,13 +3,12 @@ import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  Compass,
+  Rocket,
   Sparkles,
   Bot,
   FileText,
   Map,
   TrendingUp,
-  Users,
   Award,
   ArrowRight,
   Zap,
@@ -60,7 +59,7 @@ export default function Index() {
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-            <Compass className="w-5 h-5 text-primary-foreground" />
+            <Rocket className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="font-display font-bold text-xl text-foreground">
             Career Compass AI
@@ -204,7 +203,7 @@ export default function Index() {
       <footer className="relative z-10 border-t border-border py-8">
         <div className="max-w-7xl mx-auto px-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Compass className="w-5 h-5 text-primary" />
+            <Rocket className="w-5 h-5 text-primary" />
             <span className="text-sm text-muted-foreground">
               Career Compass AI © 2024
             </span>
