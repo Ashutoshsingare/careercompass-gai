@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ProgressRing } from "@/components/ui/ProgressRing";
 import {
   FileText,
@@ -14,40 +16,164 @@ import {
   Target,
   Lightbulb,
   Download,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-const analysisResults = {
-  score: 72,
-  sections: [
-    { name: "Contact Info", score: 100, status: "good" },
-    { name: "Summary", score: 65, status: "needs-work" },
-    { name: "Experience", score: 80, status: "good" },
-    { name: "Skills", score: 70, status: "needs-work" },
-    { name: "Education", score: 90, status: "good" },
-    { name: "Projects", score: 45, status: "critical" },
-  ],
-  strengths: [
-    "Clear contact information",
-    "Good experience section structure",
-    "Relevant education background",
-  ],
-  improvements: [
-    "Add more quantifiable achievements",
-    "Include 2-3 relevant projects with links",
-    "Expand technical skills section",
-    "Write a compelling professional summary",
-  ],
-  skillGaps: [
-    { skill: "React.js", current: 60, target: 85 },
-    { skill: "Node.js", current: 40, target: 75 },
-    { skill: "System Design", current: 25, target: 70 },
-    { skill: "AWS", current: 30, target: 60 },
-  ],
-};
+interface ResumeSection {
+  name: string;
+  score: number;
+  status: "good" | "needs-work" | "critical";
+  feedback?: string;
+}
+
+interface SkillGap {
+  skill: string;
+  current: number;
+  target: number;
+}
+
+interface AnalysisResults {
+  score: number;
+  sections: ResumeSection[];
+  strengths: string[];
+  improvements: string[];
+  skillGaps: SkillGap[];
+  summary?: string;
+}
 
 export default function Resume() {
-  const [hasUploaded, setHasUploaded] = useState(true); // For demo
+  const [hasUploaded, setHasUploaded] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
+  const [targetRole, setTargetRole] = useState("");
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    // For now, we'll read the file as text or use a basic extraction
+    // In production, you'd use a PDF parsing library
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Simple text extraction - looks for text patterns in PDF
+          let text = "";
+          const decoder = new TextDecoder('utf-8', { fatal: false });
+          const rawText = decoder.decode(uint8Array);
+          
+          // Extract readable text segments
+          const textMatches = rawText.match(/\(([^)]+)\)/g);
+          if (textMatches) {
+            text = textMatches
+              .map(m => m.slice(1, -1))
+              .filter(t => t.length > 1 && /[a-zA-Z]/.test(t))
+              .join(' ');
+          }
+          
+          // Also try to extract plain text sections
+          const plainText = rawText
+            .replace(/[^\x20-\x7E\n]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          if (text.length < 100 && plainText.length > text.length) {
+            text = plainText;
+          }
+          
+          if (text.length < 50) {
+            // Fallback: ask user to paste content
+            reject(new Error('Could not extract text from PDF. Please try copying and pasting your resume content directly.'));
+            return;
+          }
+          
+          resolve(text);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFileName(file.name);
+    setIsAnalyzing(true);
+
+    try {
+      const resumeText = await extractTextFromPDF(file);
+      
+      const { data, error } = await supabase.functions.invoke('analyze-resume', {
+        body: { resumeText, targetRole: targetRole || undefined },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setAnalysisResults(data);
+      setHasUploaded(true);
+      
+      toast({
+        title: "Analysis complete!",
+        description: "Your resume has been analyzed successfully.",
+      });
+    } catch (error: any) {
+      console.error('Resume analysis error:', error);
+      toast({
+        title: "Analysis failed",
+        description: error.message || "Failed to analyze resume. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const resetAnalysis = () => {
+    setHasUploaded(false);
+    setAnalysisResults(null);
+    setFileName("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <AppLayout>
@@ -62,19 +188,31 @@ export default function Resume() {
               AI-powered analysis to optimize your resume for your target roles
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Download Report
-            </Button>
-            <Button variant="gradient">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload New Resume
-            </Button>
-          </div>
+          {hasUploaded && (
+            <div className="flex gap-3">
+              <Button variant="outline" disabled>
+                <Download className="w-4 h-4 mr-2" />
+                Download Report
+              </Button>
+              <Button variant="gradient" onClick={resetAnalysis}>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload New Resume
+              </Button>
+            </div>
+          )}
         </div>
 
-        {hasUploaded ? (
+        {isAnalyzing ? (
+          <GlassCard className="text-center py-20">
+            <Loader2 className="w-16 h-16 mx-auto mb-6 text-primary animate-spin" />
+            <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+              Analyzing Your Resume
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Our AI is reviewing your resume and generating personalized feedback...
+            </p>
+          </GlassCard>
+        ) : hasUploaded && analysisResults ? (
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Score Overview */}
             <GlassCard hover glow>
@@ -87,7 +225,12 @@ export default function Resume() {
                     <p className="text-sm text-muted-foreground">Resume Score</p>
                   </div>
                 </ProgressRing>
-                <div className="mt-6 w-full">
+                {analysisResults.summary && (
+                  <p className="text-sm text-muted-foreground mt-4 text-left">
+                    {analysisResults.summary}
+                  </p>
+                )}
+                <div className="mt-4 w-full">
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-muted-foreground">Industry Average</span>
                     <span className="text-foreground font-medium">65</span>
@@ -96,10 +239,12 @@ export default function Resume() {
                     <div className="h-full w-[65%] bg-muted-foreground rounded-full" />
                   </div>
                 </div>
-                <p className="text-sm text-chart-4 mt-4 flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4" />
-                  Above average! Keep improving.
-                </p>
+                {analysisResults.score >= 65 && (
+                  <p className="text-sm text-chart-4 mt-4 flex items-center gap-1">
+                    <TrendingUp className="w-4 h-4" />
+                    Above average! Keep improving.
+                  </p>
+                )}
               </div>
             </GlassCard>
 
@@ -147,7 +292,7 @@ export default function Resume() {
                         {section.score}%
                       </span>
                     </div>
-                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden mb-2">
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
@@ -160,6 +305,9 @@ export default function Resume() {
                         style={{ width: `${section.score}%` }}
                       />
                     </div>
+                    {section.feedback && (
+                      <p className="text-xs text-muted-foreground">{section.feedback}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -240,7 +388,7 @@ export default function Resume() {
             </GlassCard>
           </div>
         ) : (
-          <GlassCard className="text-center py-20">
+          <GlassCard className="text-center py-16">
             <FileText className="w-16 h-16 mx-auto mb-6 text-muted-foreground" />
             <h2 className="text-2xl font-display font-bold text-foreground mb-2">
               Upload Your Resume
@@ -249,10 +397,38 @@ export default function Resume() {
               Get AI-powered insights to improve your resume and stand out to
               recruiters
             </p>
-            <Button variant="gradient" size="lg">
+            
+            <div className="max-w-sm mx-auto space-y-4 mb-8">
+              <div className="text-left">
+                <Label htmlFor="targetRole" className="text-sm text-muted-foreground">
+                  Target Role (optional)
+                </Label>
+                <Input
+                  id="targetRole"
+                  placeholder="e.g. Senior Software Engineer"
+                  value={targetRole}
+                  onChange={(e) => setTargetRole(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
+            <Button variant="gradient" size="lg" onClick={handleUploadClick}>
               <Upload className="w-5 h-5 mr-2" />
               Upload Resume (PDF)
             </Button>
+            
+            <p className="text-xs text-muted-foreground mt-4">
+              Supported format: PDF (max 10MB)
+            </p>
           </GlassCard>
         )}
       </div>
