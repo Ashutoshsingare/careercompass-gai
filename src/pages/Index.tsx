@@ -45,12 +45,6 @@ const features = [
   },
 ];
 
-const stats = [
-  { value: "10K+", label: "Students Guided" },
-  { value: "95%", label: "Placement Rate" },
-  { value: "500+", label: "Partner Companies" },
-  { value: "50+", label: "Skill Tracks" },
-];
 
 export default function Index() {
   const { user } = useAuth();
@@ -139,17 +133,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-24 animate-slide-up animation-delay-400">
-          {stats.map((stat, i) => (
-            <div key={i} className="text-center">
-              <p className="text-3xl md:text-4xl font-display font-bold gradient-text mb-2">
-                {stat.value}
-              </p>
-              <p className="text-muted-foreground text-sm">{stat.label}</p>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* Features Section */}
