@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { AppSidebar } from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import {
@@ -18,6 +19,24 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (user) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (data?.display_name) {
+          setDisplayName(data.display_name);
+        }
+      }
+    }
+    fetchProfile();
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,7 +57,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                     <User className="w-4 h-4 text-primary-foreground" />
                   </div>
                   <span className="hidden md:inline text-sm">
-                    {user.email?.split("@")[0]}
+                    {displayName || user.email?.split("@")[0]}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
