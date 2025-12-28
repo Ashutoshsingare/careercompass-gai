@@ -13,8 +13,7 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
-  Compass,
-  Sparkles,
+  Rocket,
   Bookmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -57,11 +56,8 @@ export function AppSidebar({ onCollapsedChange }: AppSidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-6 border-b border-sidebar-border">
-        <div className="relative">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-            <Compass className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <Sparkles className="w-3 h-3 text-accent absolute -top-1 -right-1 animate-pulse" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+          <Rocket className="w-5 h-5 text-primary-foreground" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
