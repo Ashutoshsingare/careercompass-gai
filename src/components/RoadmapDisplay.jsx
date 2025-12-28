@@ -20,32 +20,14 @@ import { saveRoadmap } from "@/lib/roadmap-storage";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-export interface RoadmapData {
-  title: string;
-  subtitle?: string;
-  skills: string[];
-  tools: string[];
-  phases: {
-    name: string;
-    duration?: string;
-    topics: string[];
-  }[];
-}
-
-interface RoadmapDisplayProps {
-  data: RoadmapData;
-  showSaveButton?: boolean;
-  onSaved?: () => void;
-}
-
-export function RoadmapDisplay({ data, showSaveButton = true, onSaved }: RoadmapDisplayProps) {
-  const [openPhases, setOpenPhases] = useState<number[]>([0]);
+export function RoadmapDisplay({ data, showSaveButton = true, onSaved }) {
+  const [openPhases, setOpenPhases] = useState([0]);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const togglePhase = (index: number) => {
+  const togglePhase = (index) => {
     setOpenPhases((prev) =>
       prev.includes(index)
         ? prev.filter((i) => i !== index)
@@ -231,7 +213,7 @@ export function RoadmapDisplay({ data, showSaveButton = true, onSaved }: Roadmap
 }
 
 // Parser function to extract structured roadmap data from AI response
-export function parseRoadmapFromText(text: string, userGoal: string): RoadmapData | null {
+export function parseRoadmapFromText(text, userGoal) {
   try {
     // Try to parse as JSON first
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -252,9 +234,9 @@ export function parseRoadmapFromText(text: string, userGoal: string): RoadmapDat
   }
 
   // Fallback: Extract from markdown format
-  const skills: string[] = [];
-  const tools: string[] = [];
-  const phases: { name: string; duration?: string; topics: string[] }[] = [];
+  const skills = [];
+  const tools = [];
+  const phases = [];
 
   // Extract skills section
   const skillsMatch = text.match(/(?:required skills|skills to learn|key skills)[:\s]*([\s\S]*?)(?=\n(?:tools|technologies|phase|##)|$)/i);
@@ -287,7 +269,7 @@ export function parseRoadmapFromText(text: string, userGoal: string): RoadmapDat
     const phaseName = match[3]?.trim() || `Phase ${phaseNum}`;
     const content = match[4] || "";
     
-    const topics: string[] = [];
+    const topics = [];
     const topicLines = content.match(/[-*•]\s*(.+)/g);
     if (topicLines) {
       topicLines.forEach(line => {
