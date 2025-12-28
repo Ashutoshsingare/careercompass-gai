@@ -15,6 +15,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { streamChat } from "@/lib/ai-chat";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -24,10 +26,10 @@ interface Message {
 }
 
 const quickPrompts = [
-  { icon: Map, label: "Generate Roadmap", prompt: "Create a personalized learning roadmap for becoming a Full Stack Developer" },
-  { icon: FileText, label: "Resume Tips", prompt: "Give me tips to improve my resume for software engineering roles" },
-  { icon: Brain, label: "Interview Prep", prompt: "Help me prepare for technical interviews at top tech companies" },
-  { icon: Lightbulb, label: "Skill Gap Analysis", prompt: "Analyze the skills I need to develop for a career in data science" },
+  { icon: Map, label: "Generate Roadmap", prompt: "Create a personalized learning roadmap for becoming a Full Stack Developer with React and Node.js. I'm currently a beginner with basic HTML/CSS knowledge." },
+  { icon: FileText, label: "Resume Tips", prompt: "Give me tips to improve my resume for software engineering roles at top tech companies" },
+  { icon: Brain, label: "Interview Prep", prompt: "Help me prepare for technical interviews at top tech companies like Google, Meta, and Amazon" },
+  { icon: Lightbulb, label: "Skill Gap Analysis", prompt: "Analyze the skills I need to develop for a career in data science. I currently know Python basics and some statistics." },
 ];
 
 export default function AIAgent() {
@@ -42,6 +44,7 @@ export default function AIAgent() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,24 +69,56 @@ export default function AIAgent() {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response (will be replaced with actual Gemini API call)
-    setTimeout(() => {
-      const responses = [
-        "Based on your goals, I recommend starting with fundamentals in programming. Here's a structured 3-phase roadmap:\n\n**Phase 1: Foundation (4 weeks)**\n- HTML, CSS basics\n- JavaScript fundamentals\n- Git version control\n\n**Phase 2: Core Skills (8 weeks)**\n- React.js framework\n- Node.js backend\n- Database fundamentals\n\n**Phase 3: Advanced (6 weeks)**\n- System design\n- Cloud services (AWS)\n- DevOps practices\n\nWould you like me to break down any of these phases in more detail?",
-        "Great question! Here are some key tips to strengthen your resume:\n\n1. **Quantify achievements** - Use numbers to show impact\n2. **Highlight relevant projects** - Include GitHub links\n3. **Use action verbs** - Start bullets with strong verbs\n4. **Tailor for each role** - Customize for the job description\n5. **Keep it concise** - One page for early career\n\nWould you like me to analyze a specific section of your resume?",
-        "For technical interview preparation, I suggest this approach:\n\n**Data Structures & Algorithms**\n- Arrays, Strings, Hash Maps\n- Trees, Graphs, Dynamic Programming\n- Practice on LeetCode (aim for 150+ problems)\n\n**System Design**\n- Learn distributed systems concepts\n- Practice designing scalable systems\n\n**Behavioral**\n- Prepare STAR method stories\n- Research company values\n\nShall I create a detailed study plan for any of these areas?",
-      ];
+    // Prepare messages for API (excluding timestamps and ids)
+    const apiMessages = [...messages, userMessage]
+      .filter(m => m.id !== "1") // Exclude initial greeting
+      .map(m => ({ role: m.role, content: m.content }));
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date(),
-      };
+    let assistantContent = "";
 
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsLoading(false);
-    }, 1500);
+    await streamChat({
+      messages: apiMessages,
+      type: "chat",
+      onDelta: (delta) => {
+        assistantContent += delta;
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant" && last.id.startsWith("streaming-")) {
+            return prev.map((m, i) => 
+              i === prev.length - 1 ? { ...m, content: assistantContent } : m
+            );
+          }
+          return [
+            ...prev,
+            {
+              id: `streaming-${Date.now()}`,
+              role: "assistant" as const,
+              content: assistantContent,
+              timestamp: new Date(),
+            },
+          ];
+        });
+      },
+      onDone: () => {
+        setIsLoading(false);
+        // Finalize the message ID
+        setMessages(prev => 
+          prev.map((m, i) => 
+            i === prev.length - 1 && m.id.startsWith("streaming-")
+              ? { ...m, id: Date.now().toString() }
+              : m
+          )
+        );
+      },
+      onError: (error) => {
+        setIsLoading(false);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to get AI response",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   return (
@@ -151,7 +186,7 @@ export default function AIAgent() {
                 </div>
               </div>
             ))}
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                   <Bot className="w-4 h-4 text-primary-foreground" />
@@ -209,7 +244,11 @@ export default function AIAgent() {
                 variant="gradient"
                 disabled={!input.trim() || isLoading}
               >
-                <Send className="w-4 h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </form>
           </div>
