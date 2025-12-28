@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
   Wrench,
   Calendar,
   ChevronDown,
   ChevronUp,
+  Bookmark,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -13,6 +16,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { saveRoadmap } from "@/lib/roadmap-storage";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface RoadmapData {
   title: string;
@@ -28,10 +34,16 @@ export interface RoadmapData {
 
 interface RoadmapDisplayProps {
   data: RoadmapData;
+  showSaveButton?: boolean;
+  onSaved?: () => void;
 }
 
-export function RoadmapDisplay({ data }: RoadmapDisplayProps) {
-  const [openPhases, setOpenPhases] = useState<number[]>([0]); // First phase open by default
+export function RoadmapDisplay({ data, showSaveButton = true, onSaved }: RoadmapDisplayProps) {
+  const [openPhases, setOpenPhases] = useState<number[]>([0]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   const togglePhase = (index: number) => {
     setOpenPhases((prev) =>
@@ -41,16 +53,66 @@ export function RoadmapDisplay({ data }: RoadmapDisplayProps) {
     );
   };
 
+  const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save roadmaps.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    const { error } = await saveRoadmap(data);
+    setIsSaving(false);
+
+    if (error) {
+      toast({
+        title: "Failed to save",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setIsSaved(true);
+      toast({
+        title: "Roadmap saved!",
+        description: "You can access it from your saved roadmaps.",
+      });
+      onSaved?.();
+    }
+  };
+
   return (
     <div className="space-y-6 w-full max-w-4xl mx-auto">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl p-6 border border-primary/20">
-        <h2 className="text-2xl md:text-3xl font-display font-bold gradient-text mb-2">
-          {data.title}
-        </h2>
-        <p className="text-muted-foreground">
-          {data.subtitle || "Your personalized career roadmap is ready."}
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-display font-bold gradient-text mb-2">
+              {data.title}
+            </h2>
+            <p className="text-muted-foreground">
+              {data.subtitle || "Your personalized career roadmap is ready."}
+            </p>
+          </div>
+          {showSaveButton && (
+            <Button
+              variant={isSaved ? "default" : "outline"}
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving || isSaved}
+              className="shrink-0"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Bookmark className={cn("w-4 h-4 mr-2", isSaved && "fill-current")} />
+              )}
+              {isSaved ? "Saved" : "Save Roadmap"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Skills & Tools Grid */}
