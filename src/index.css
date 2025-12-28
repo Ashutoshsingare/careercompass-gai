@@ -239,7 +239,3 @@
 .animation-delay-500 {
   animation-delay: 500ms;
 }
-
-.animate-shine {
-  animation: shine 3s ease-in-out infinite;
-}

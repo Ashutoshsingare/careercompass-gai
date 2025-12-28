@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { AnimeNavBar } from "@/components/ui/anime-navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Rocket,
@@ -16,16 +15,7 @@ import {
   Target,
   Brain,
   LogIn,
-  Home,
-  LayoutDashboard,
 } from "lucide-react";
-
-const navItems = [
-  { name: "Home", url: "/", icon: Home },
-  { name: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { name: "AI Agent", url: "/ai-agent", icon: Bot },
-  { name: "Resume", url: "/resume", icon: FileText },
-];
 
 const features = [
   {
@@ -224,9 +214,6 @@ export default function Index() {
           </div>
         </div>
       </footer>
-
-      {/* Animated Bottom Navbar */}
-      <AnimeNavBar items={navItems} defaultActive="Home" />
     </div>
   );
 }
