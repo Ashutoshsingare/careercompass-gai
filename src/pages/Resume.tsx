@@ -53,53 +53,17 @@ export default function Resume() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    // For now, we'll read the file as text or use a basic extraction
-    // In production, you'd use a PDF parsing library
+  const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const uint8Array = new Uint8Array(arrayBuffer);
-          
-          // Simple text extraction - looks for text patterns in PDF
-          let text = "";
-          const decoder = new TextDecoder('utf-8', { fatal: false });
-          const rawText = decoder.decode(uint8Array);
-          
-          // Extract readable text segments
-          const textMatches = rawText.match(/\(([^)]+)\)/g);
-          if (textMatches) {
-            text = textMatches
-              .map(m => m.slice(1, -1))
-              .filter(t => t.length > 1 && /[a-zA-Z]/.test(t))
-              .join(' ');
-          }
-          
-          // Also try to extract plain text sections
-          const plainText = rawText
-            .replace(/[^\x20-\x7E\n]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          if (text.length < 100 && plainText.length > text.length) {
-            text = plainText;
-          }
-          
-          if (text.length < 50) {
-            // Fallback: ask user to paste content
-            reject(new Error('Could not extract text from PDF. Please try copying and pasting your resume content directly.'));
-            return;
-          }
-          
-          resolve(text);
-        } catch (error) {
-          reject(error);
-        }
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix to get just the base64 content
+        const base64 = result.split(',')[1];
+        resolve(base64);
       };
       reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsArrayBuffer(file);
+      reader.readAsDataURL(file);
     });
   };
 
@@ -129,10 +93,11 @@ export default function Resume() {
     setIsAnalyzing(true);
 
     try {
-      const resumeText = await extractTextFromPDF(file);
+      // Convert PDF to base64 and send to Gemini for direct analysis
+      const pdfBase64 = await fileToBase64(file);
       
       const { data, error } = await supabase.functions.invoke('analyze-resume', {
-        body: { resumeText, targetRole: targetRole || undefined },
+        body: { pdfBase64, targetRole: targetRole || undefined },
       });
 
       if (error) {
@@ -150,11 +115,12 @@ export default function Resume() {
         title: "Analysis complete!",
         description: "Your resume has been analyzed successfully.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Resume analysis error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to analyze resume. Please try again.";
       toast({
         title: "Analysis failed",
-        description: error.message || "Failed to analyze resume. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
