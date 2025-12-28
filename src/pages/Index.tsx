@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Compass,
   Sparkles,
@@ -14,6 +15,7 @@ import {
   Zap,
   Target,
   Brain,
+  LogIn,
 } from "lucide-react";
 
 const features = [
@@ -51,6 +53,8 @@ const stats = [
 ];
 
 export default function Index() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Background Effects */}
@@ -69,15 +73,34 @@ export default function Index() {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <Link to="/dashboard">
-            <Button variant="ghost">Dashboard</Button>
-          </Link>
-          <Link to="/ai-agent">
-            <Button variant="gradient">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Get Started
-            </Button>
-          </Link>
+          {user ? (
+            <>
+              <Link to="/dashboard">
+                <Button variant="ghost">Dashboard</Button>
+              </Link>
+              <Link to="/ai-agent">
+                <Button variant="gradient">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI Agent
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/auth">
+                <Button variant="ghost">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign in
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button variant="gradient">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 

@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Compass,
   Sparkles,
+  Bookmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ const navItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "AI Agent", url: "/ai-agent", icon: Bot },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Saved Roadmaps", url: "/saved-roadmaps", icon: Bookmark },
   { title: "Daily Tasks", url: "/daily-tasks", icon: CalendarCheck },
   { title: "Resume Analyzer", url: "/resume", icon: FileText },
   { title: "Skill Lab", url: "/skill-lab", icon: FlaskConical },
@@ -32,9 +34,19 @@ const navItems = [
   { title: "Profile", url: "/profile", icon: User },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  onCollapsedChange?: (collapsed: boolean) => void;
+}
+
+export function AppSidebar({ onCollapsedChange }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+
+  const handleToggle = () => {
+    const newCollapsed = !collapsed;
+    setCollapsed(newCollapsed);
+    onCollapsedChange?.(newCollapsed);
+  };
 
   return (
     <aside
@@ -102,7 +114,7 @@ export function AppSidebar() {
           variant="ghost"
           size="sm"
           className="w-full justify-center"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={handleToggle}
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
