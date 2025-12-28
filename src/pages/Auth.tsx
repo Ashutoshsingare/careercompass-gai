@@ -5,20 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useToast } from "@/hooks/use-toast";
-import { Compass, Sparkles, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
+import { Compass, Sparkles, Mail, Lock, Loader2, ArrowLeft, User } from "lucide-react";
 import { z } from "zod";
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const signupSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
 });
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
   
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -26,15 +33,20 @@ export default function Auth() {
 
   const validateForm = () => {
     try {
-      authSchema.parse({ email, password });
+      if (isLogin) {
+        loginSchema.parse({ email, password });
+      } else {
+        signupSchema.parse({ email, password, fullName });
+      }
       setErrors({});
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const newErrors: { email?: string; password?: string } = {};
+        const newErrors: { email?: string; password?: string; fullName?: string } = {};
         error.errors.forEach((err) => {
           if (err.path[0] === "email") newErrors.email = err.message;
           if (err.path[0] === "password") newErrors.password = err.message;
+          if (err.path[0] === "fullName") newErrors.fullName = err.message;
         });
         setErrors(newErrors);
       }
@@ -74,7 +86,7 @@ export default function Auth() {
           navigate("/dashboard");
         }
       } else {
-        const { error } = await signUp(email, password);
+        const { error } = await signUp(email, password, fullName);
         if (error) {
           if (error.message.includes("User already registered")) {
             toast({
@@ -157,6 +169,25 @@ export default function Auth() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Your full name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10 bg-secondary/50 border-border/40"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.fullName && (
+                  <p className="text-destructive text-xs mt-1">{errors.fullName}</p>
+                )}
+              </div>
+            )}
+
             <div>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -220,6 +251,7 @@ export default function Auth() {
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setErrors({});
+                  setFullName("");
                 }}
                 className="text-primary hover:underline font-medium"
               >
