@@ -160,7 +160,7 @@ export default function Opportunities() {
                 <div
                   className={cn(
                     "inline-block px-2 py-0.5 rounded text-xs font-medium border mb-2",
-                    typeColors[opp.type]
+                    typeColors[opp.type as keyof typeof typeColors]
                   )}
                 >
                   {opp.type === "Internship" && <GraduationCap className="w-3 h-3 inline mr-1" />}

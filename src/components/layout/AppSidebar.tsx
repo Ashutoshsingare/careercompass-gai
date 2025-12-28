@@ -33,7 +33,11 @@ const navItems = [
   { title: "Profile", url: "/profile", icon: User },
 ];
 
-export function AppSidebar({ onCollapsedChange }) {
+interface AppSidebarProps {
+  onCollapsedChange?: (collapsed: boolean) => void;
+}
+
+export function AppSidebar({ onCollapsedChange }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 

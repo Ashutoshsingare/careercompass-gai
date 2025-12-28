@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
-import { RoadmapDisplay } from "@/components/RoadmapDisplay";
-import { getSavedRoadmaps, deleteRoadmap } from "@/lib/roadmap-storage";
+import { RoadmapDisplay, type RoadmapData } from "@/components/RoadmapDisplay";
+import { getSavedRoadmaps, deleteRoadmap, type SavedRoadmap } from "@/lib/roadmap-storage";
 import { useToast } from "@/hooks/use-toast";
 import {
   Map,
@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-function roadmapToData(saved) {
+function roadmapToData(saved: SavedRoadmap): RoadmapData {
   return {
     title: saved.title,
     subtitle: saved.subtitle || undefined,
@@ -38,10 +38,10 @@ function roadmapToData(saved) {
 }
 
 export default function SavedRoadmaps() {
-  const [roadmaps, setRoadmaps] = useState([]);
+  const [roadmaps, setRoadmaps] = useState<SavedRoadmap[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRoadmap, setSelectedRoadmap] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
+  const [selectedRoadmap, setSelectedRoadmap] = useState<SavedRoadmap | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadRoadmaps = async () => {
@@ -63,7 +63,7 @@ export default function SavedRoadmaps() {
     loadRoadmaps();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     setDeletingId(id);
     const { error } = await deleteRoadmap(id);
     setDeletingId(null);

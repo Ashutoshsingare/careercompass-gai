@@ -1,6 +1,14 @@
+import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function GlassCard({ children, className, hover = false, glow = false }) {
+interface GlassCardProps {
+  children: ReactNode;
+  className?: string;
+  hover?: boolean;
+  glow?: boolean;
+}
+
+export function GlassCard({ children, className, hover = false, glow = false }: GlassCardProps) {
   return (
     <div
       className={cn(

@@ -12,10 +12,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function AppLayout({ children }) {
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [displayName, setDisplayName] = useState(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchProfile() {
