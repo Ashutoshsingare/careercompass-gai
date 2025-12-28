@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { resumeText, targetRole } = await req.json();
+    const { pdfBase64, targetRole } = await req.json();
     
-    if (!resumeText) {
+    if (!pdfBase64) {
       return new Response(
-        JSON.stringify({ error: 'Resume text is required' }),
+        JSON.stringify({ error: 'PDF data is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -26,9 +26,11 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are an expert resume analyst and career coach. Analyze the provided resume and provide detailed, actionable feedback.
+    const systemPrompt = `You are an expert resume analyst and career coach. You will be given a PDF resume to analyze.
 
-You MUST respond with valid JSON in this exact format:
+First, extract and read the text content from the PDF carefully. Then provide detailed, actionable feedback.
+
+You MUST respond with valid JSON in this exact format (no other text before or after):
 {
   "score": <number 0-100>,
   "sections": [
@@ -42,7 +44,14 @@ You MUST respond with valid JSON in this exact format:
   "summary": "<brief overall assessment>"
 }
 
-Sections to analyze: Contact Info, Summary/Objective, Experience, Skills, Education, Projects (if present), Certifications (if present).
+Sections to analyze (include only those present in the resume):
+- Contact Info
+- Summary/Objective  
+- Experience
+- Skills
+- Education
+- Projects
+- Certifications
 
 For each section:
 - "good" = score >= 75
@@ -51,7 +60,10 @@ For each section:
 
 Consider the target role "${targetRole || 'general professional role'}" when analyzing skill gaps and improvements.
 
-Be specific and actionable in your feedback. Identify 3-5 skill gaps relevant to the target role.`;
+Be specific and actionable in your feedback. Identify 3-5 skill gaps relevant to the target role.
+Return ONLY the JSON object, no markdown formatting or additional text.`;
+
+    console.log('Sending request to Lovable AI Gateway...');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -63,12 +75,29 @@ Be specific and actionable in your feedback. Identify 3-5 skill gaps relevant to
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Please analyze this resume:\n\n${resumeText}` }
+          { 
+            role: 'user', 
+            content: [
+              {
+                type: 'text',
+                text: 'Please analyze this resume PDF and provide feedback in the JSON format specified.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:application/pdf;base64,${pdfBase64}`
+                }
+              }
+            ]
+          }
         ],
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI gateway error:', response.status, errorText);
+      
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
@@ -81,23 +110,37 @@ Be specific and actionable in your feedback. Identify 3-5 skill gaps relevant to
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error('AI gateway error');
+      throw new Error(`AI gateway error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('Received response from AI');
+    
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
       throw new Error('No response from AI');
     }
 
+    console.log('AI response content:', content.substring(0, 200));
+
     // Parse the JSON response
     let analysis;
     try {
-      // Extract JSON from the response (in case there's extra text)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      // Clean up the response - remove markdown code blocks if present
+      let cleanContent = content.trim();
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.slice(7);
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.slice(3);
+      }
+      if (cleanContent.endsWith('```')) {
+        cleanContent = cleanContent.slice(0, -3);
+      }
+      cleanContent = cleanContent.trim();
+      
+      // Extract JSON from the response
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[0]);
       } else {
@@ -105,6 +148,7 @@ Be specific and actionable in your feedback. Identify 3-5 skill gaps relevant to
       }
     } catch (parseError) {
       console.error('Failed to parse AI response:', content);
+      console.error('Parse error:', parseError);
       throw new Error('Failed to parse analysis results');
     }
 
