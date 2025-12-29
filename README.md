@@ -1,65 +1,88 @@
-# Career Compass AI
+🧭 Career Compass AI
+Your Personal AI Career Mentor
 
-## Project info
+Not just an app — Career Compass AI is a complete Career Operating System for students.
 
-Career Compass AI is an intelligent career guidance platform that helps students and professionals navigate their career journeys with personalized advice, learning roadmaps, and resume analysis.
+🚀 About the Project
 
-## How can I edit this code?
+Career Compass AI is an AI-powered career guidance web application that helps college students build clear career paths, stay consistent with daily learning, analyze their resumes, and prepare for placements using Google Gemini AI.
 
-**Use your preferred IDE**
+It converts confusion into clarity.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes.
+🎯 Problem We Solve
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Most students face:
 
-Follow these steps:
+Career confusion
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+No personalized roadmap
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Skill gap in placements
 
-# Step 3: Install the necessary dependencies.
-npm i
+Lack of daily learning discipline
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Career Compass AI provides a personal AI mentor to solve this.
+
+💡 Key Features
+
+🤖 Gemini Powered AI Career Mentor
+
+🗺 Personalized Career Roadmaps
+
+📅 Daily Smart Learning Tasks
+
+📄 Resume Analyzer & Skill Mapper
+
+🧪 Skill Assessments & Strength Analysis
+
+📊 Progress Analytics Dashboard
+
+🎯 Internship, Hackathon & Job Finder
+
+🏅 Streak & Badge Gamification
+
+📥 Roadmap PDF Download
+
+🧠 AI Interview Coach
+
+🛠 Tech Stack
+Layer	Technology
+Frontend	React (Vite), Tailwind CSS
+Backend	Node.js, Express.js
+Database	MongoDB
+Auth	Firebase Authentication
+AI	Google Gemini API
+Hosting	Vercel / Google Cloud
+🧩 System Workflow
+
+Student creates profile
+
+Gemini AI analyzes student data
+
+Personalized career roadmap generated
+
+Daily learning tasks assigned
+
+Resume and skill mapping done
+
+Progress & placement readiness tracked
+
+🏆 Why Career Compass AI?
+
+Not a chatbot — a Career Operating System
+
+Measurable career progress
+
+Real student impact
+
+Highly scalable for institutions
+
+🖥 Live Demo
+
+🔗 https://careercompass-gai.vercel.app/
+
+📦 Installation
+git clone https://github.com/yourusername/career-compass-ai.git
+cd career-compass-ai
+npm install
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-This project can be deployed to Vercel. See the `vercel.json` configuration file for deployment settings.
-
-For detailed deployment instructions, refer to the project documentation or deploy via:
-- Vercel Dashboard: Import your repository and configure environment variables
-- Vercel CLI: Run `vercel --prod` after setting up your environment variables
-
-Required environment variables:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
