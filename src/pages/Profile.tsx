@@ -47,7 +47,6 @@ const badges = [
 
 const stats = [
   { label: "Career Readiness", value: 72 },
-  { label: "Roadmap Progress", value: 65 },
   { label: "Resume Score", value: 78 },
   { label: "Skill Coverage", value: 58 },
 ];

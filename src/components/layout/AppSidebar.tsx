@@ -7,8 +7,6 @@ import {
   CalendarCheck,
   FileText,
   FlaskConical,
-  Map,
-  TrendingUp,
   Target,
   User,
   ChevronLeft,
@@ -27,8 +25,6 @@ const navItems = [
   { title: "Daily Tasks", url: "/daily-tasks", icon: CalendarCheck },
   { title: "Resume Analyzer", url: "/resume", icon: FileText },
   { title: "Skill Lab", url: "/skill-lab", icon: FlaskConical },
-  { title: "Roadmap", url: "/roadmap", icon: Map },
-  { title: "Progress", url: "/progress", icon: TrendingUp },
   { title: "Opportunities", url: "/opportunities", icon: Target },
   { title: "Profile", url: "/profile", icon: User },
 ];

@@ -11,11 +11,10 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AIAgent from "./pages/AIAgent";
-import Roadmap from "./pages/Roadmap";
 import Resume from "./pages/Resume";
 import DailyTasks from "./pages/DailyTasks";
 import SkillLab from "./pages/SkillLab";
-import Progress from "./pages/Progress";
+import JavaScriptTest from "./pages/JavaScriptTest";
 import Opportunities from "./pages/Opportunities";
 import Profile from "./pages/Profile";
 import SavedRoadmaps from "./pages/SavedRoadmaps";
@@ -37,12 +36,11 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/ai-agent" element={<ProtectedRoute><AIAgent /></ProtectedRoute>} />
-                <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
                 <Route path="/saved-roadmaps" element={<ProtectedRoute><SavedRoadmaps /></ProtectedRoute>} />
                 <Route path="/resume" element={<ProtectedRoute><Resume /></ProtectedRoute>} />
                 <Route path="/daily-tasks" element={<ProtectedRoute><DailyTasks /></ProtectedRoute>} />
                 <Route path="/skill-lab" element={<ProtectedRoute><SkillLab /></ProtectedRoute>} />
-                <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+                <Route path="/test/javascript-basics" element={<ProtectedRoute><JavaScriptTest /></ProtectedRoute>} />
                 <Route path="/opportunities" element={<ProtectedRoute><Opportunities /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatCard } from "@/components/ui/StatCard";
-import { ProgressRing } from "@/components/ui/ProgressRing";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,6 @@ import {
   Award,
   BookOpen,
   Clock,
-  ChevronRight,
   Zap,
   Calendar,
   CheckCircle2,
@@ -109,62 +107,6 @@ export default function Dashboard() {
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Progress Overview */}
-          <GlassCard className="lg:col-span-2" hover>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-display font-semibold text-foreground">
-                Roadmap Progress
-              </h2>
-              <Link to="/roadmap">
-                <Button variant="ghost" size="sm">
-                  View Full Roadmap
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-8">
-              <ProgressRing progress={65} size={160}>
-                <div className="text-center">
-                  <p className="text-3xl font-display font-bold text-foreground">
-                    65%
-                  </p>
-                  <p className="text-xs text-muted-foreground">Complete</p>
-                </div>
-              </ProgressRing>
-
-              <div className="flex-1 space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Phase 1: Foundations</span>
-                    <span className="text-chart-4 font-medium">Complete ✓</span>
-                  </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full w-full bg-chart-4 rounded-full" />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Phase 2: Core Skills</span>
-                    <span className="text-primary font-medium">75%</span>
-                  </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full w-3/4 bg-gradient-to-r from-primary to-accent rounded-full" />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Phase 3: Advanced</span>
-                    <span className="text-muted-foreground font-medium">20%</span>
-                  </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full w-1/5 bg-muted-foreground rounded-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-
           {/* Today's Tasks */}
           <GlassCard hover>
             <div className="flex items-center justify-between mb-6">

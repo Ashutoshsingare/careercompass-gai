@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/button";
@@ -75,7 +76,49 @@ const assessments = [
   },
 ];
 
+const practiceTests = [
+  {
+    title: "Frontend Foundations",
+    questions: 10,
+    duration: "15 min",
+    difficulty: "Beginner",
+    status: "available",
+  },
+  {
+    title: "React Component Patterns",
+    questions: 12,
+    duration: "20 min",
+    difficulty: "Intermediate",
+    status: "available",
+  },
+  {
+    title: "TypeScript Essentials",
+    questions: 8,
+    duration: "12 min",
+    difficulty: "Beginner",
+    status: "locked",
+  },
+  {
+    title: "API Design Quick Check",
+    questions: 14,
+    duration: "18 min",
+    difficulty: "Intermediate",
+    status: "locked",
+  },
+];
+
 export default function SkillLab() {
+  const navigate = useNavigate();
+
+  const handleTestClick = (skillName: string) => {
+    if (skillName === "JavaScript Basics") {
+      navigate("/test/javascript-basics");
+    } else {
+      // For other skills, show a toast or placeholder
+      console.log(`Test for ${skillName} coming soon`);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-8">
@@ -156,7 +199,11 @@ export default function SkillLab() {
                           />
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleTestClick(skill.name)}
+                      >
                         <Zap className="w-4 h-4 mr-1" />
                         Test
                       </Button>
@@ -225,6 +272,59 @@ export default function SkillLab() {
                       )}
                     >
                       {assessment.difficulty}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            {/* Practice Tests (dummy) */}
+            <GlassCard hover>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5 text-accent" />
+                <h2 className="text-lg font-display font-semibold text-foreground">
+                  Practice Tests
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {practiceTests.map((test, i) => (
+                  <div
+                    key={i}
+                    className="p-4 rounded-lg border bg-secondary/40 border-border/40 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="font-medium text-foreground">{test.title}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <span>{test.questions} questions</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {test.duration}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold",
+                          test.difficulty === "Beginner"
+                            ? "bg-chart-4/20 text-chart-4"
+                            : "bg-primary/20 text-primary",
+                        )}
+                      >
+                        {test.difficulty}
+                      </span>
+                      {test.status === "available" ? (
+                        <Button variant="outline" size="sm">
+                          <Play className="w-4 h-4 mr-1" />
+                          Start
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" disabled>
+                          <Lock className="w-4 h-4 mr-1" />
+                          Locked
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
