@@ -117,7 +117,7 @@ Remember to:
 - Consider the user's current level and goals`;
     }
 
-    console.log("Calling Lovable AI Gateway...");
+    console.log("Calling Career Compass AI Gateway...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

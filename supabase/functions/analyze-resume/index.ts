@@ -63,7 +63,7 @@ Consider the target role "${targetRole || 'general professional role'}" when ana
 Be specific and actionable in your feedback. Identify 3-5 skill gaps relevant to the target role.
 Return ONLY the JSON object, no markdown formatting or additional text.`;
 
-    console.log('Sending request to Lovable AI Gateway...');
+    console.log('Sending request to Career Compass AI Gateway...');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
